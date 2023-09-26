@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: "/hw3/",
+  base: "/homework-3-manga-cover-creation-app-YunZng/",
 });
