@@ -5,36 +5,111 @@ const ENDPOINT_COMPLETIONS = "https://api.openai.com/v1/chat/completions";
 const ENDPOINT_IMAGES = "https://api.openai.com/v1/images/generations";
 
 // Global variables
-let API_KEY;
+let API_KEY, header;
+let title = document.getElementById("mangaTitle");
+let theme = document.getElementById("mangaTheme");
+let button = document.getElementById("generateButton");
+let blurbArea = document.getElementById("generatedBlurb");
+let imgArea = document.getElementById("coverImage");
+let spinner = document.getElementById("spinner");
 
 // Helper functions
 async function getBlurb(title, theme) {
-  // TODO Implement Me!
-  // Use the OpenAI API to generate a blurb based on the title and theme.
-  // You should use the global API_KEY variable to authenticate your request.
-  // You must use fetch to make the request.
-  // You should return the generated blurb.
+  return fetch(ENDPOINT_COMPLETIONS, {
+    method: 'POST',
+    headers: header,
+    body: JSON.stringify({
+      'model': 'gpt-3.5-turbo',
+      'messages': [
+        {
+          'role': 'user',
+          'content': `Generate a good blurb using title "${title}", and theme "${theme}".`
+        },
+        {
+          'role': 'user',
+          'content': `Make it shorter, around 100 words.`
+        },
+
+        {
+          'role': 'user',
+          'content': `Check your grammar.`
+        }
+      ]
+    })
+  })
+    .then(response => response.json())
+    .then(responseJSON => {
+      try {
+        return responseJSON.choices[0].message.content;
+      } catch (err) {
+        throw new Error(responseJSON.error.message);
+      }
+    });
 }
 
 async function getCoverImage(blurb) {
-  // TODO Implement Me!
-  // Use the OpenAI API to generate a cover image based on the blurb.
-  // You should use the global API_KEY variable to authenticate your request.
-  // You must use fetch to make the request.
-  // You should return the URL of the generated image.
+  return fetch(ENDPOINT_IMAGES, {
+    method: 'POST',
+    headers: header,
+    body: JSON.stringify({
+      'prompt': `Give me a cool, clear, readable image about this blurb: ${blurb}`
+    })
+  })
+    .then(response => response.json())
+    .then(responseJSON => {
+      try {
+        return responseJSON.data[0].url;
+      } catch (err) {
+        throw new Error(responseJSON.error.message);
+      }
+    });
 }
 
 // Event handlers
 async function handleFormSubmission(e) {
-  // TODO Implement Me!
-  // This function is called when the form is submitted.
-  // It should get the title and theme from the form.
-  // It should then call getBlurb and getCoverImage to generate the blurb and image.
-  // Finally, it should update the DOM to display the blurb and image.
+  e.preventDefault();
+  if (!title.value || !theme.value) {
+    alert("Are you really trynna trick me by submitting blanks?");
+  } else {
+    try {
+      // prevent action, reset content, show loading
+      title.readOnly = true;
+      theme.readOnly = true;
+      button.classList.add("hidden");
+      blurbArea.classList.add("hidden");
+      blurbArea.innerHTML = '';
+      imgArea.classList.add("hidden");
+      imgArea.src = '';
+      spinner.classList.remove("hidden");
+
+      // start requesting blurb
+      let blurb = await getBlurb(title.value, theme.value);
+      blurbArea.classList.remove("hidden");
+      blurbArea.innerHTML = blurb;
+      // start requesting image
+      let imgURL = await getCoverImage(blurb);
+      imgArea.classList.remove("hidden");
+      imgArea.src = imgURL;
+    } catch (err) {
+      alert(err);
+      console.log(err);
+    }
+
+    // restore setting
+    spinner.classList.add("hidden");
+    title.readOnly = false;
+    theme.readOnly = false;
+    button.classList.remove("hidden");
+  }
+  return;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   API_KEY = localStorage.getItem("openai_api_key");
+  header = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${API_KEY}`
+  };
 
   if (!API_KEY) {
     alert(
