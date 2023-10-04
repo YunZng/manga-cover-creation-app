@@ -5,16 +5,14 @@ const ENDPOINT_COMPLETIONS = "https://api.openai.com/v1/chat/completions";
 const ENDPOINT_IMAGES = "https://api.openai.com/v1/images/generations";
 
 // Global variables
-let API_KEY, header;
-let title = document.getElementById("mangaTitle");
-let theme = document.getElementById("mangaTheme");
-let button = document.getElementById("generateButton");
-let blurbArea = document.getElementById("generatedBlurb");
-let imgArea = document.getElementById("coverImage");
-let spinner = document.getElementById("spinner");
+let API_KEY;
 
 // Helper functions
 async function getBlurb(title, theme) {
+  let header = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${API_KEY}`
+  };
   return fetch(ENDPOINT_COMPLETIONS, {
     method: 'POST',
     headers: header,
@@ -48,6 +46,10 @@ async function getBlurb(title, theme) {
 }
 
 async function getCoverImage(blurb) {
+  let header = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${API_KEY}`
+  };
   return fetch(ENDPOINT_IMAGES, {
     method: 'POST',
     headers: header,
@@ -67,6 +69,12 @@ async function getCoverImage(blurb) {
 
 // Event handlers
 async function handleFormSubmission(e) {
+  let title = document.getElementById("mangaTitle");
+  let theme = document.getElementById("mangaTheme");
+  let button = document.getElementById("generateButton");
+  let blurbArea = document.getElementById("generatedBlurb");
+  let imgArea = document.getElementById("coverImage");
+  let spinner = document.getElementById("spinner");
   e.preventDefault();
   if (!title.value || !theme.value) {
     alert("Are you really trynna trick me by submitting blanks?");
@@ -106,10 +114,6 @@ async function handleFormSubmission(e) {
 
 document.addEventListener("DOMContentLoaded", () => {
   API_KEY = localStorage.getItem("openai_api_key");
-  header = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${API_KEY}`
-  };
 
   if (!API_KEY) {
     alert(
